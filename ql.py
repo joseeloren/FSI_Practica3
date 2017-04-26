@@ -79,20 +79,54 @@ def qlearning(s1, a, s2):
     Q[s1][a] = Rewards[s2] + discount * max(Q[s2])
     return
 
+def getOptimalAction(state):
+    possible_actions = getActions(state)
+    potential_actions = Q[state]
+
+    while True:
+        idx = np.argmax(potential_actions)
+        action = actions_list.keys()[idx]
+        if action in possible_actions:
+            return action
+        else:
+            np.delete(potential_actions, idx)
+        if len(potential_actions) == 0:
+            return 'INVALID'
+
 
 # Episodes
+action_exploration_counter = 0
+action_exploitation_counter = 0
+exploration = True
+
 for i in xrange(100):
     state = getRndState()
-    while state != final_state:
-        action = getRndAction(state)
-        y = getStateCoord(state)[0] + actions_vectors[action][0]
-        x = getStateCoord(state)[1] + actions_vectors[action][1]
-        new_state = getState(y, x)
-        qlearning(state, actions_list[action], new_state)
-        state = new_state
+    if exploration:
+        while state != final_state:
+            action_exploration_counter += 1
+            action = getRndAction(state)
+            y = getStateCoord(state)[0] + actions_vectors[action][0]
+            x = getStateCoord(state)[1] + actions_vectors[action][1]
+            new_state = getState(y, x)
+            qlearning(state, actions_list[action], new_state)
+            state = new_state
+    else:
+        while state != final_state:
+            action_exploitation_counter += 1
+            action = getOptimalAction(state)
+            if (action == 'INVALID'):
+                break
+            y = getStateCoord(state)[0] + actions_vectors[action][0]
+            x = getStateCoord(state)[1] + actions_vectors[action][1]
+            new_state = getState(y, x)
+            state = new_state
+    exploration = not exploration
 
 print Q
 
+print 'Promedio de acciones por episodio (exploracion)= %.2f' % (action_exploration_counter/50)
+print 'Promedio de acciones por episodio (explotacion)= %.2f' % (action_exploitation_counter/50)
+print 'action_exploitation_counter=%.2f' % (action_exploitation_counter)
 
 # Q matrix plot
 
