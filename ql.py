@@ -82,7 +82,7 @@ def qlearning(s1, a, s2):
 def getOptimalAction(state):
     possible_actions = getActions(state)
     potential_actions = Q[state]
-
+ #si da cero, coger aleatoria, para evitar invalido
     while True:
         idx = np.argmax(potential_actions)
         action = actions_list.keys()[idx]
