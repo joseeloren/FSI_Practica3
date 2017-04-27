@@ -89,14 +89,14 @@ def greedy(state):
     return getRndAction(state) if Q[state][idx] == 0 else actions_reverse[idx]
 
 
-def e_greedy(state):
+def e_greedy(state,p):
     probability = random.random()
-    return getRndAction(state) if probability < 0.2 else greedy(state)
+    return getRndAction(state) if probability < p else greedy(state)
 
 # Episodes
 epochs = 100
 
-for policy in (getRndAction, greedy, e_greedy):
+for policy in (getRndAction, greedy):
     action_counter = 0
     Q = np.zeros((height * width,num_actions))
     for i in xrange(epochs):
@@ -112,6 +112,24 @@ for policy in (getRndAction, greedy, e_greedy):
     #print Q
 
     print 'Promedio de acciones por episodio (%s)= %.2f' % (policy.__name__, action_counter/50)
+
+for p in (.2,.4,.6,.8):
+    policy = e_greedy
+    action_counter = 0
+    Q = np.zeros((height * width, num_actions))
+    for i in xrange(epochs):
+        state = getRndState()
+        while state != final_state:
+            action_counter += 1
+            action = policy(state,p)
+            y = getStateCoord(state)[0] + actions_vectors[action][0]
+            x = getStateCoord(state)[1] + actions_vectors[action][1]
+            new_state = getState(y, x)
+            qlearning(state, actions_list[action], new_state)
+            state = new_state
+    # print Q
+
+    print 'Promedio de acciones por episodio (%s, %.1f)= %.2f' % (policy.__name__, p, action_counter / 50)
 
 # Q matrix plot
 """
