@@ -16,6 +16,8 @@ actions_list = {"UP": 0,
                 "LEFT": 3
                 }
 
+actions_reverse = {v: k for k,v in actions_list.iteritems()}
+
 actions_vectors = {"UP": (-1, 0),
                    "RIGHT": (0, 1),
                    "DOWN": (1, 0),
@@ -25,8 +27,21 @@ actions_vectors = {"UP": (-1, 0),
 # Discount factor
 discount = 0.8
 
+
+
 Q = np.zeros((height * width, num_actions))  # Q matrix
 Rewards = np.zeros(height * width)  # Reward matrix, it is stored in one dimension
+Rewards[4 * width + 3] = -10000
+Rewards[4 * width + 2] = -10000
+Rewards[4 * width + 1] = -10000
+Rewards[4 * width + 0] = -10000
+
+Rewards[9 * width + 4] = -10000
+Rewards[9 * width + 3] = -10000
+Rewards[9 * width + 2] = -10000
+Rewards[9 * width + 1] = -10000
+
+Rewards[3 * width + 3] = 100
 
 
 def getState(y, x):
@@ -59,77 +74,47 @@ def getRndState():
     return random.randint(0, height * width - 1)
 
 
-Rewards[4 * width + 3] = -10000
-Rewards[4 * width + 2] = -10000
-Rewards[4 * width + 1] = -10000
-Rewards[4 * width + 0] = -10000
-
-Rewards[9 * width + 4] = -10000
-Rewards[9 * width + 3] = -10000
-Rewards[9 * width + 2] = -10000
-Rewards[9 * width + 1] = -10000
-
-Rewards[3 * width + 3] = 100
 final_state = getState(3, 3)
 
-print np.reshape(Rewards, (height, width))
+#print np.reshape(Rewards, (height, width))
 
 
 def qlearning(s1, a, s2):
     Q[s1][a] = Rewards[s2] + discount * max(Q[s2])
     return
 
-def getOptimalAction(state):
-    possible_actions = getActions(state)
-    potential_actions = Q[state]
- #si da cero, coger aleatoria, para evitar invalido
-    while True:
-        idx = np.argmax(potential_actions)
-        action = actions_list.keys()[idx]
-        if action in possible_actions:
-            return action
-        else:
-            np.delete(potential_actions, idx)
-        if len(potential_actions) == 0:
-            return 'INVALID'
 
+def greedy(state):
+    idx = np.argmax(Q[state])
+    return getRndAction(state) if Q[state][idx] == 0 else actions_reverse[idx]
+
+
+def e_greedy(state):
+    probability = random.random()
+    return getRndAction(state) if probability < 0.2 else greedy(state)
 
 # Episodes
-action_exploration_counter = 0
-action_exploitation_counter = 0
-exploration = True
+epochs = 100
 
-for i in xrange(100):
-    state = getRndState()
-    if exploration:
+for policy in (getRndAction, greedy, e_greedy):
+    action_counter = 0
+    Q = np.zeros((height * width,num_actions))
+    for i in xrange(epochs):
+        state = getRndState()
         while state != final_state:
-            action_exploration_counter += 1
-            action = getRndAction(state)
+            action_counter += 1
+            action = policy(state)
             y = getStateCoord(state)[0] + actions_vectors[action][0]
             x = getStateCoord(state)[1] + actions_vectors[action][1]
             new_state = getState(y, x)
             qlearning(state, actions_list[action], new_state)
             state = new_state
-    else:
-        while state != final_state:
-            action_exploitation_counter += 1
-            action = getOptimalAction(state)
-            if (action == 'INVALID'):
-                break
-            y = getStateCoord(state)[0] + actions_vectors[action][0]
-            x = getStateCoord(state)[1] + actions_vectors[action][1]
-            new_state = getState(y, x)
-            state = new_state
-    exploration = not exploration
+    #print Q
 
-print Q
-
-print 'Promedio de acciones por episodio (exploracion)= %.2f' % (action_exploration_counter/50)
-print 'Promedio de acciones por episodio (explotacion)= %.2f' % (action_exploitation_counter/50)
-print 'action_exploitation_counter=%.2f' % (action_exploitation_counter)
+    print 'Promedio de acciones por episodio (%s)= %.2f' % (policy.__name__, action_counter/50)
 
 # Q matrix plot
-
+"""
 s = 0
 ax = plt.axes()
 ax.axis([-1, width + 1, -1, height + 1])
@@ -156,3 +141,4 @@ for j in xrange(height):
     plt.plot([0, width], [j+1, j+1], 'b')
 
 plt.show()
+"""
