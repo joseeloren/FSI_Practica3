@@ -2,6 +2,8 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
+def xrange(*args, **kwargs):
+    return iter(range(*args, **kwargs))
 
 # Environment size
 width = 5
@@ -16,7 +18,12 @@ actions_list = {"UP": 0,
                 "LEFT": 3
                 }
 
-actions_reverse = {v: k for k,v in actions_list.iteritems()}
+
+actions_reverse = {0: "UP",
+                   1: "RIGHT",
+                   2: "DOWN",
+                   3: "LEFT"
+                   }
 
 actions_vectors = {"UP": (-1, 0),
                    "RIGHT": (0, 1),
@@ -95,6 +102,7 @@ def e_greedy(state,p):
 
 # Episodes
 epochs = 100
+actions_means=[]
 
 for policy in (getRndAction, greedy):
     action_counter = 0
@@ -111,9 +119,10 @@ for policy in (getRndAction, greedy):
             state = new_state
     #print Q
 
-    print 'Promedio de acciones por episodio (%s)= %.2f' % (policy.__name__, action_counter/50)
+    print('Promedio de acciones por episodio (', policy.__name__, ')=', action_counter/epochs)
+    actions_means.append(action_counter/epochs)
 
-for p in (.2,.4,.6,.8):
+for p in (.2, .4, .6, .8):
     policy = e_greedy
     action_counter = 0
     Q = np.zeros((height * width, num_actions))
@@ -129,10 +138,22 @@ for p in (.2,.4,.6,.8):
             state = new_state
     # print Q
 
-    print 'Promedio de acciones por episodio (%s, %.1f)= %.2f' % (policy.__name__, p, action_counter / 50)
+    print('Promedio de acciones por episodio (', policy.__name__, ', ', p, ')=', action_counter / epochs)
+    actions_means.append(action_counter / epochs)
 
-# Q matrix plot
+policies = ("aleatorio", "greedy", "e-greedy 0.2", "e-greedy 0.4", "e-greedy 0.6", "e-greedy 0.8")
+
+number_of_policies = []
+for v in range(len(policies)):
+    number_of_policies.append(v)
+
+plt.bar(number_of_policies, actions_means, align="center")
+plt.ylabel('Promedio de acciones por episodio')
+plt.xticks(number_of_policies, policies)
+plt.show()
 """
+# Q matrix plot
+
 s = 0
 ax = plt.axes()
 ax.axis([-1, width + 1, -1, height + 1])
